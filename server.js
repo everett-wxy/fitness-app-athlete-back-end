@@ -22,7 +22,7 @@ async function syncDatabase() {
         console.error("Error syncing DB: ", error);
     }
 }
-// syncDatabase();
+syncDatabase();
 
 app.use('/', auth);
 app.use('/', update);

@@ -1,4 +1,8 @@
-const { User, UserPhysicalMeasurement } = require("../model/users"); // import User model
+const {
+    User,
+    UserPhysicalMeasurement,
+    UserTrainingPreference,
+} = require("../model/users"); // import User model
 
 const updateUser = async (req, res) => {
     const { firstName, lastName, dob, gender } = req.body;
@@ -52,9 +56,70 @@ const createUserPhysicalMeasurement = async (req, res) => {
             message: "User physcial measurement created successfully",
         });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal Server Error" });
+        console.error("Error creating physical measurement: ", error);
+        res.status(500).json({
+            status: "error",
+            message: "Error creating physical measurement",
+            error: error.message,
+        });
     }
 };
 
-module.exports = { updateUser, createUserPhysicalMeasurement };
+const createUserTrainingPreferences = async (req, res) => {
+    try {
+        const {
+            trainingGoal,
+            availableDaysToTrain,
+            availableTimetoTrain,
+            startingFitnessLevel,
+        } = req.body;
+        const userId = req.decoded.userId;
+
+        const user = await User.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({ error: "user not found" });
+        }
+
+        const existingPreference =
+            await UserTrainingPreference.findByPk(userId);
+
+        if (existingPreference) {
+            // If preference exists, update it
+            await existingPreference.update({
+                training_goal: trainingGoal || existingPreference.training_goal,
+                training_days_per_week: availableDaysToTrain || existingPreference.training_days_per_week,
+                training_time_per_session: availableTimetoTrain || existingPreference.training_time_per_session,
+                starting_fitness_level: startingFitnessLevel || existingPreference.starting_fitness_level,
+            });
+
+            return res.status(200).json({
+                message: "User preference updated successfully",
+            });
+        } else {
+            await UserTrainingPreference.create({
+                userId,
+                training_goal: trainingGoal,
+                training_days_per_week: availableDaysToTrain,
+                training_time_per_session: availableTimetoTrain,
+                starting_fitness_level: startingFitnessLevel,
+            });
+
+            return res.status(201).json({
+                message: "User preference created successfully",
+            });
+        }
+    } catch (error) {
+        console.error("Error creating training preferences: ", error);
+        res.status(500).json({
+            status: "error",
+            message: "Error creating training preferences",
+            error: error.message,
+        });
+    }
+};
+
+module.exports = {
+    updateUser,
+    createUserPhysicalMeasurement,
+    createUserTrainingPreferences,
+};

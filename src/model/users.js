@@ -42,16 +42,19 @@ const UserTrainingPreference = sequelize.define("user_training_preference", {
     },
     training_goal: {
         type: DataTypes.STRING,
-        allowNull: false,
+        // allowNull: false,
     },
     training_days_per_week: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        // allowNull: false,
     },
     training_time_per_session: {
         type: DataTypes.STRING,
-        allowNull: false,
+        // allowNull: false,
     },
+    starting_fitness_level: {
+        type: DataTypes.STRING,
+    }
 });
 
 const UserPhysicalMeasurement = sequelize.define(
