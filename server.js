@@ -14,14 +14,14 @@ app.use(express.json());
 // sync models with DB
 async function syncDatabase() {
     try {
-        await sequelize.sync({ force: true });
-        // await sequelize.sync({ alter: true });
+        // await sequelize.sync({ force: true });
+        await sequelize.sync({ alter: true });
         console.log("DB synced");
     } catch (error) {
         console.error("Error syncing DB: ", error);
     }
 }
-syncDatabase();
+// syncDatabase();
 
 app.use("/", auth);
 app.use("/", update);

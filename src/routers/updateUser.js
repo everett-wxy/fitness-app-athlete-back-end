@@ -3,11 +3,12 @@ const {
     updateUser,
     createPhysicalMeasurement,
     createTrainingPreference,
+    updateAccessToEquipements,
 } = require("../controllers/updateUser");
 const { authenticateToken } = require("../middleware/auth");
 const router = express.Router();
 
-// router 
+// router
 router.patch("/update/user", authenticateToken, updateUser);
 
 router.post(
@@ -15,10 +16,12 @@ router.post(
     authenticateToken,
     createPhysicalMeasurement
 );
+router.post("/update/preferences", authenticateToken, createTrainingPreference);
+
 router.post(
-    "/update/preferences",
+    "/update/accessToEquipments",
     authenticateToken,
-    createTrainingPreference
+    updateAccessToEquipements
 );
 
 module.exports = router;

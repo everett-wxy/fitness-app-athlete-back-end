@@ -2,6 +2,8 @@ const {
     User,
     PhysicalMeasurement,
     TrainingPreference,
+    UserEquipment,
+    EquipmentAccess,
 } = require("../model/index");
 
 const updateUser = async (req, res) => {
@@ -47,7 +49,7 @@ const createPhysicalMeasurement = async (req, res) => {
         }
 
         await PhysicalMeasurement.create({
-            userId,
+            user_id: userId,
             weight,
             height,
         });
@@ -80,8 +82,7 @@ const createTrainingPreference = async (req, res) => {
             return res.status(404).json({ error: "user not found" });
         }
 
-        const existingPreference =
-            await TrainingPreference.findByPk(userId);
+        const existingPreference = await TrainingPreference.findByPk(userId);
 
         if (existingPreference) {
             // If preference exists, update it
@@ -103,7 +104,7 @@ const createTrainingPreference = async (req, res) => {
             });
         } else {
             await TrainingPreference.create({
-                userId,
+                user_id: userId,
                 training_goal: trainingGoal,
                 training_days_per_week: availableDaysToTrain,
                 training_time_per_session: availableTimetoTrain,
@@ -124,8 +125,55 @@ const createTrainingPreference = async (req, res) => {
     }
 };
 
+const updateAccessToEquipements = async (req, res) => {
+    try {
+        
+        const { accessToEquipmentLevel } = req.body;
+        const userId = req.decoded.userId;
+
+        const user = await User.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({ error: "user not found" });
+        }
+
+        const matchingEquipments = await EquipmentAccess.findAll({
+            where: {
+                access_category_name: accessToEquipmentLevel,
+            },
+            raw: true,
+        });
+
+        if (!matchingEquipments) {
+            return res.status(404).json({
+                error: "There's no match to equipment with current access",
+            });
+        }
+
+        const userAccessToEquipment = matchingEquipments.map((equipment) => ({
+            user_id: userId,
+            equipment_name: equipment.equipment_name,
+        }));
+
+        await UserEquipment.bulkCreate(userAccessToEquipment, {
+            ignoreDuplicates: true,
+        });
+
+        res.status(200).json({
+            status: "success",
+            message: "User equipment access updated successfully",
+        });
+    } catch (error) {
+        console.error("Error updating user equipment access: ", error);
+        res.status(500).json({
+            status: "error",
+            message: "Error updating user equipment access",
+            error: error.message,
+        });
+    }
+};
 module.exports = {
     updateUser,
     createPhysicalMeasurement,
     createTrainingPreference,
+    updateAccessToEquipements,
 };

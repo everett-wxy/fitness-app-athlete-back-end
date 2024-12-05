@@ -44,4 +44,5 @@ module.exports = {
     Equipment,
     AccessCategory,
     EquipmentAccess,
+    UserEquipment
 };
