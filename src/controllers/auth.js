@@ -1,4 +1,4 @@
-const { User } = require("../model/users"); // import User model
+const { User } = require("../model/index"); // import User model
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
@@ -87,27 +87,5 @@ const login = async (req, res) => {
     }
 };
 
-function authenticateToken(req, res, next) {
-    // check if authorization header exists in the incoming HTTP request
-    if (!("authorization" in req.headers)) {
-        return res.status(400).json({ status: "error", msg: "no token" });
-    }
 
-    // extract token from header
-    const token = req.headers.authorization.split(" ")[1];
-
-    // if token exist, verify it against access_token_secret, if verified, pass decoded payload and move on to the next controller
-    if (token) {
-        try {
-            const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-            req.decoded = decoded;
-            next();
-        } catch (error) {
-            console.error(error.message);
-            res.status(401).json({ status: "error", msg: "not authorised" });
-        }
-    } else {
-        return res.status(403).json({ status: "error", msg: "no token" });
-    }
-}
-module.exports = { register, login, authenticateToken };
+module.exports = { register, login };

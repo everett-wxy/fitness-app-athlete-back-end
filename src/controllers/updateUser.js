@@ -1,8 +1,8 @@
 const {
     User,
-    UserPhysicalMeasurement,
-    UserTrainingPreference,
-} = require("../model/users"); // import User model
+    PhysicalMeasurement,
+    TrainingPreference,
+} = require("../model/index");
 
 const updateUser = async (req, res) => {
     const { firstName, lastName, dob, gender } = req.body;
@@ -36,7 +36,7 @@ const updateUser = async (req, res) => {
     }
 };
 
-const createUserPhysicalMeasurement = async (req, res) => {
+const createPhysicalMeasurement = async (req, res) => {
     try {
         const { weight, height } = req.body;
         const userId = req.decoded.userId;
@@ -46,7 +46,7 @@ const createUserPhysicalMeasurement = async (req, res) => {
             return res.status(404).json({ error: "user not found" });
         }
 
-        const newPhysicalMeasurement = await UserPhysicalMeasurement.create({
+        await PhysicalMeasurement.create({
             userId,
             weight,
             height,
@@ -65,7 +65,7 @@ const createUserPhysicalMeasurement = async (req, res) => {
     }
 };
 
-const createUserTrainingPreferences = async (req, res) => {
+const createTrainingPreference = async (req, res) => {
     try {
         const {
             trainingGoal,
@@ -81,22 +81,28 @@ const createUserTrainingPreferences = async (req, res) => {
         }
 
         const existingPreference =
-            await UserTrainingPreference.findByPk(userId);
+            await TrainingPreference.findByPk(userId);
 
         if (existingPreference) {
             // If preference exists, update it
             await existingPreference.update({
                 training_goal: trainingGoal || existingPreference.training_goal,
-                training_days_per_week: availableDaysToTrain || existingPreference.training_days_per_week,
-                training_time_per_session: availableTimetoTrain || existingPreference.training_time_per_session,
-                starting_fitness_level: startingFitnessLevel || existingPreference.starting_fitness_level,
+                training_days_per_week:
+                    availableDaysToTrain ||
+                    existingPreference.training_days_per_week,
+                training_time_per_session:
+                    availableTimetoTrain ||
+                    existingPreference.training_time_per_session,
+                starting_fitness_level:
+                    startingFitnessLevel ||
+                    existingPreference.starting_fitness_level,
             });
 
             return res.status(200).json({
                 message: "User preference updated successfully",
             });
         } else {
-            await UserTrainingPreference.create({
+            await TrainingPreference.create({
                 userId,
                 training_goal: trainingGoal,
                 training_days_per_week: availableDaysToTrain,
@@ -120,6 +126,6 @@ const createUserTrainingPreferences = async (req, res) => {
 
 module.exports = {
     updateUser,
-    createUserPhysicalMeasurement,
-    createUserTrainingPreferences,
+    createPhysicalMeasurement,
+    createTrainingPreference,
 };
