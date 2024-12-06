@@ -1,28 +1,31 @@
-const {
-    User,
-    PhysicalMeasurement,
-    TrainingPreference,
-    UserEquipment,
-    EquipmentAccess,
-} = require("../model/index");
+const pool = require("../db/db"); // Import pg pool instance
 
 const updateUser = async (req, res) => {
     const { firstName, lastName, dob, gender } = req.body;
     const userId = req.decoded.userId;
 
     try {
-        const user = await User.findByPk(userId);
+        const userResult = await pool.query(
+            "SELECT * FROM users WHERE id = $1",
+            [userId]
+        );
 
-        if (!user) {
-            throw new Error("user not found");
+        if (userResult.rowCount === 0) {
+            return res.status(404).json({ error: "User not found" });
         }
 
-        user.first_name = firstName || user.first_name;
-        user.last_name = lastName || user.last_name;
-        user.date_of_birth = dob || user.date_of_birth;
-        user.gender = gender || user.gender;
+        const user = userResult.rows[0];
 
-        await user.save();
+        const updatedUser = await pool.query(
+            "UPDATE users SET first_name = $1, last_name = $2, date_of_birth = $3, gender = $4 WHERE id = $5 RETURNING*",
+            [
+                firstName || user.first_name,
+                lastName || user.last_name,
+                dob || user.date_of_birth,
+                gender || user.gender,
+                userId,
+            ]
+        );
 
         res.status(200).json({
             status: "success",
@@ -43,16 +46,19 @@ const createPhysicalMeasurement = async (req, res) => {
         const { weight, height } = req.body;
         const userId = req.decoded.userId;
 
-        const user = await User.findByPk(userId);
-        if (!user) {
-            return res.status(404).json({ error: "user not found" });
+        const userResult = await pool.query(
+            "SELECT * FROM users WHERE id = $1",
+            [userId]
+        );
+
+        if (userResult.rowCount === 0) {
+            return res.status(404).json({ error: "User not found" });
         }
 
-        await PhysicalMeasurement.create({
-            user_id: userId,
-            weight,
-            height,
-        });
+        await pool.query(
+            "INSERT INTO physical_measurements (user_id, weight, height) VALUES ($1, $2, $3)",
+            [userId, weight, height]
+        );
 
         return res.status(201).json({
             message: "User physcial measurement created successfully",
@@ -77,39 +83,51 @@ const createTrainingPreference = async (req, res) => {
         } = req.body;
         const userId = req.decoded.userId;
 
-        const user = await User.findByPk(userId);
-        if (!user) {
-            return res.status(404).json({ error: "user not found" });
+        const userResult = await pool.query(
+            "SELECT * FROM users WHERE id = $1",
+            [userId]
+        );
+
+        if (userResult.rowCount === 0) {
+            return res.status(404).json({ error: "User not found" });
         }
 
-        const existingPreference = await TrainingPreference.findByPk(userId);
+        const existingPreferenceResult = await pool.query(
+            "SELECT * FROM training_preferences WHERE user_id = $1",
+            [userId]
+        );
 
-        if (existingPreference) {
-            // If preference exists, update it
-            await existingPreference.update({
-                training_goal: trainingGoal || existingPreference.training_goal,
-                training_days_per_week:
+        if (existingPreferenceResult.rowCount > 0) {
+            await pool.query(
+                "UPDATE training_preferences SET training_goal = $1, training_days_per_week = $2, training_time_per_session = $3, starting_fitness_level = $4 WHERE user_id = $5",
+                [
+                    trainingGoal ||
+                        existingPreferenceResult.rows[0].training_goal,
                     availableDaysToTrain ||
-                    existingPreference.training_days_per_week,
-                training_time_per_session:
+                        existingPreferenceResult.rows[0].training_days_per_week,
                     availableTimetoTrain ||
-                    existingPreference.training_time_per_session,
-                starting_fitness_level:
+                        existingPreferenceResult.rows[0]
+                            .training_time_per_session,
                     startingFitnessLevel ||
-                    existingPreference.starting_fitness_level,
-            });
+                        existingPreferenceResult.rows[0].starting_fitness_level,
+                    userId,
+                ]
+            );
 
             return res.status(200).json({
                 message: "User preference updated successfully",
             });
         } else {
-            await TrainingPreference.create({
-                user_id: userId,
-                training_goal: trainingGoal,
-                training_days_per_week: availableDaysToTrain,
-                training_time_per_session: availableTimetoTrain,
-                starting_fitness_level: startingFitnessLevel,
-            });
+            await pool.query(
+                "INSERT INTO training_preferences (user_id, training_goal, training_days_per_week, training_time_per_session, starting_fitness_level) VALUES ($1, $2, $3, $4, $5)",
+                [
+                    userId,
+                    trainingGoal,
+                    availableDaysToTrain,
+                    availableTimetoTrain,
+                    startingFitnessLevel,
+                ]
+            );
 
             return res.status(201).json({
                 message: "User preference created successfully",
@@ -127,36 +145,42 @@ const createTrainingPreference = async (req, res) => {
 
 const updateAccessToEquipements = async (req, res) => {
     try {
-        
         const { accessToEquipmentLevel } = req.body;
         const userId = req.decoded.userId;
 
-        const user = await User.findByPk(userId);
-        if (!user) {
-            return res.status(404).json({ error: "user not found" });
+        const userResult = await pool.query(
+            "SELECT * FROM users WHERE id = $1",
+            [userId]
+        );
+
+        if (userResult.rowCount === 0) {
+            return res.status(404).json({ error: "User not found" });
         }
 
-        const matchingEquipments = await EquipmentAccess.findAll({
-            where: {
-                access_category_name: accessToEquipmentLevel,
-            },
-            raw: true,
-        });
+        const matchingEquipmentsResult = await pool.query(
+            "SELECT * FROM equipment_access WHERE access_category_name = $1",
+            [accessToEquipmentLevel]
+        );
 
-        if (!matchingEquipments) {
+        if (matchingEquipmentsResult.rowCount === 0) {
             return res.status(404).json({
-                error: "There's no match to equipment with current access",
+                error: "No match found for equipment with current access level",
             });
         }
 
-        const userAccessToEquipment = matchingEquipments.map((equipment) => ({
-            user_id: userId,
-            equipment_name: equipment.equipment_name,
-        }));
+        const userAccessToEquipment = matchingEquipmentsResult.rows.map(
+            (equipment) => ({
+                user_id: userId,
+                equipment_name: equipment.equipment_name,
+            })
+        );
 
-        await UserEquipment.bulkCreate(userAccessToEquipment, {
-            ignoreDuplicates: true,
-        });
+        for (let equipment of userAccessToEquipment) {
+            await pool.query(
+                "INSERT INTO user_equipment (user_id, equipment_name) VALUES ($1, $2) ON CONFLICT (user_id, equipment_name) DO NOTHING",
+                [equipment.user_id, equipment.equipment_name]
+            );
+        }
 
         res.status(200).json({
             status: "success",

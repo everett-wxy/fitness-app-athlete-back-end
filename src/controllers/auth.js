@@ -1,14 +1,18 @@
-const { User } = require("../model/index"); // import User model
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
+const pool = require("../db/db"); // Import pg pool instance
 
 const register = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        const duplicateEmail = await User.findOne({ where: { email } });
-        if (duplicateEmail) {
+        // const duplicateEmail = await User.findOne({ where: { email } });
+        const duplicateEmailResult = await pool.query(
+            "SELECT * FROM users WHERE email = $1",
+            [email]
+        ); 
+        if (duplicateEmailResult.rowCount > 0) {
             return res.status(400).json({
                 status: "error",
                 message:
@@ -17,12 +21,14 @@ const register = async (req, res) => {
         }
         const hashed_password = await bcrypt.hash(password, 10);
 
-        const createdUser = await User.create({
-            email: email,
-            hashed_password: hashed_password,
-        });
+        const insertUserResult = await pool.query(
+            "INSERT INTO users (email, hashed_password) VALUES ($1, $2) RETURNING id",
+            [email, hashed_password]
+        );
 
-        const claims = { userId: createdUser.id };
+        const userId = insertUserResult.rows[0].id; 
+
+        const claims = { userId };  
 
         const token = jwt.sign(claims, process.env.ACCESS_TOKEN_SECRET, {
             expiresIn: "30d",
@@ -46,17 +52,27 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
     try {
-        const user = await User.findOne({ where: { email: req.body.email } });
-        if (!user) {
-            return res
-                .status(400)
-                .json({ status: "error", msg: "Account does not exist" });
-        }
+        const { email, password } = req.body;
+
+        const userResult = await pool.query(
+            "SELECT * FROM users WHERE email = $1",
+            [email]
+        );
+
+        if (userResult.rowCount === 0) {
+            return res.status(400).json({
+                status: "error",
+                message: "Account does not exist",
+            });
+        }; 
+
+        const user = userResult.rows[0];
 
         const match = await bcrypt.compare(
-            req.body.password,
+            password,
             user.hashed_password
         );
+
         if (!match) {
             return res
                 .status(400)
