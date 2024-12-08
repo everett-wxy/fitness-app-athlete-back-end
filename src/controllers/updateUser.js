@@ -158,7 +158,7 @@ const updateAccessToEquipements = async (req, res) => {
         }
 
         const matchingEquipmentsResult = await pool.query(
-            "SELECT * FROM equipment_access WHERE access_category_name = $1",
+            "SELECT * FROM equipment_accesses WHERE access_category_name = $1",
             [accessToEquipmentLevel]
         );
 
@@ -177,7 +177,7 @@ const updateAccessToEquipements = async (req, res) => {
 
         for (let equipment of userAccessToEquipment) {
             await pool.query(
-                "INSERT INTO user_equipment (user_id, equipment_name) VALUES ($1, $2) ON CONFLICT (user_id, equipment_name) DO NOTHING",
+                "INSERT INTO user_equipments (user_id, equipment_name) VALUES ($1, $2) ON CONFLICT (user_id, equipment_name) DO NOTHING",
                 [equipment.user_id, equipment.equipment_name]
             );
         }
