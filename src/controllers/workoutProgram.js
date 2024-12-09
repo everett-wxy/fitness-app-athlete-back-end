@@ -150,33 +150,57 @@ const createProgramFramework = (
         trainingPreferences.starting_fitness_level === "Beginner"
     ) {
         const workoutProgramFramework = {
-            workoutA: {
-                lowerBody: {
-                    exercise:
-                        restructuredExerciseData["lower body"]["compound"][0],
+            title: "Beginner 5 x 5",
+            description:
+                "The Strongman 5x5 workout is an excellent training routine for beginners looking to build strength, power, and functional fitness. Inspired by the strength and endurance demands of traditional strongman events, this workout focuses on compound movements that target multiple muscle groups, helping you develop overall body strength, improve stability, and increase athletic performance.",
+            workoutProgram: [
+                {
+                    description: "full body workout A",
+                    exercises: [
+                        {
+                            exercise:
+                                restructuredExerciseData["lower body"][
+                                    "compound"
+                                ][0],
+                        },
+                        {
+                            exercise:
+                                restructuredExerciseData["chest"][
+                                    "compound"
+                                ][0],
+                        },
+                        {
+                            exercise:
+                                restructuredExerciseData["upper back"][
+                                    "compound"
+                                ][0],
+                        },
+                    ],
                 },
-                chest: {
-                    exercise: restructuredExerciseData["chest"]["compound"][0],
+                {
+                    description: "full body workout B",
+                    exercises: [
+                        {
+                            exercise:
+                                restructuredExerciseData["lower body"][
+                                    "compound"
+                                ][0],
+                        },
+                        {
+                            exercise:
+                                restructuredExerciseData["shoulder"][
+                                    "compound"
+                                ][0],
+                        },
+                        {
+                            exercise:
+                                restructuredExerciseData["lower back"][
+                                    "compound"
+                                ][0],
+                        },
+                    ],
                 },
-                upperBack: {
-                    exercise:
-                        restructuredExerciseData["upper back"]["compound"][0],
-                },
-            },
-            workoutB: {
-                lowerBody: {
-                    exercise:
-                        restructuredExerciseData["lower body"]["compound"][0],
-                },
-                shoulders: {
-                    exercise:
-                        restructuredExerciseData["shoulder"]["compound"][0],
-                },
-                lowerBack: {
-                    exercise:
-                        restructuredExerciseData["lower back"]["compound"][0],
-                },
-            },
+            ],
         };
 
         return workoutProgramFramework;
@@ -185,62 +209,67 @@ const createProgramFramework = (
     }
 };
 
-const createWeeklyWorkouts = (
+const createProgramSkeleton = (
     workoutProgramFramework,
     trainingDaysPerWeek,
-    numWeeks = 2
+    numWeeks = 2,
+    startDate = new Date()
 ) => {
     const weeklyWorkouts = [];
     let lastWorkout = "A";
+    let currentDate = new Date(startDate); // Initialize the current date to the start date
 
-    // loop through the weeks
+    // Set the current date to the next Monday if it's not already Monday
+    const dayOfWeek = currentDate.getDay();
+    const daysUntilMonday = dayOfWeek === 0 ? 6 : (1 - dayOfWeek + 7) % 7;
+    currentDate.setDate(currentDate.getDate() + daysUntilMonday); // Set currentDate to the next Monday
+    let sessionNo = 1;
+
+    // Loop through the weeks
     for (let week = 1; week <= numWeeks; week++) {
-        const weekWorkouts = [];
-
-        // loop through the days
+        // Loop through the days (1 to 7, representing each day of the week)
         for (let day = 1; day <= 7; day++) {
-            // If the day is part of the training days (1, 3, 5 for 3 days a week)
+            // Only train on selected days (1, 3, 5 for 3 days a week)
             if (
                 trainingDaysPerWeek === 3 &&
                 (day === 1 || day === 3 || day === 5)
             ) {
-                // check if the last workout was A or B
+                let currentWorkout;
+                let currentWorkoutTitle;
+                // Decide which workout to assign
                 if (lastWorkout === "A") {
-                    if (day === 1 || day === 5) {
-                        weekWorkouts.push({
-                            day,
-                            workout: workoutProgramFramework.workoutA,
-                        });
-                    } else {
-                        weekWorkouts.push({
-                            day,
-                            workout: workoutProgramFramework.workoutB,
-                        });
-                    }
-                    lastWorkout = "B";
+                    currentWorkout =
+                        workoutProgramFramework.workoutProgram[1].exercises;
+                    currentWorkoutTitle = "Workout B";
+                    lastWorkout = "B"; // Switch to workout B for the next workout
                 } else {
-                    if (day === 1 || day === 5) {
-                        weekWorkouts.push({
-                            day,
-                            workout: workoutProgramFramework.workoutB,
-                        });
-                    } else {
-                        weekWorkouts.push({
-                            day,
-                            workout: workoutProgramFramework.workoutA,
-                        });
-                    }
-                    lastWorkout = "A";
+                    currentWorkout =
+                        workoutProgramFramework.workoutProgram[0].exercises;
+                    currentWorkoutTitle = "Workout A";
+                    lastWorkout = "A"; // Switch to workout A for the next workout
                 }
+
+                // Push the workout for the day
+                weeklyWorkouts.push({
+                    week: week,
+                    sessionNo: sessionNo++,
+                    dayOfWeek: day,
+                    date: new Date(
+                        new Date(currentDate).setHours(0, 0, 0, 0) // Reset time to midnight
+                    ),
+                    title: currentWorkoutTitle,
+                    workout: currentWorkout, // Assign the workout based on the alternation
+                });
             }
+            // Increment to the next day
+            currentDate.setDate(currentDate.getDate() + 1);
         }
-        weeklyWorkouts.push({ week, workouts: weekWorkouts });
     }
-    return weeklyWorkouts;
+
+    return { programSkeleton: weeklyWorkouts, numWeeks };
 };
 
-const addSetsToWorkouts = (weeklyTrainingProgram, trainingTimePerSession) => {
-    // Determine sets based on training time
+const addSetsToWorkouts = (programSkeleton, trainingTimePerSession) => {
     let setsPerExercise;
     if (trainingTimePerSession <= 30) {
         setsPerExercise = 1;
@@ -250,28 +279,18 @@ const addSetsToWorkouts = (weeklyTrainingProgram, trainingTimePerSession) => {
         setsPerExercise = 3;
     }
 
-    // Add sets to each workout
-    return weeklyTrainingProgram.map((week) => {
-        const updatedWorkouts = week.workouts.map((workoutDay) => {
-            const updatedWorkout = {};
-
-            // Add sets for each muscle group in the workout
-            for (const muscleGroup in workoutDay.workout) {
-                updatedWorkout[muscleGroup] = {
-                    exercise: workoutDay.workout[muscleGroup].exercise,
-                    sets: setsPerExercise,
-                };
-            }
-
-            return { ...workoutDay, workout: updatedWorkout };
+    const programWithSets = programSkeleton.map((session) => {
+        const addSets = session.workout.map((exercise) => {
+            return { ...exercise, sets: setsPerExercise };
         });
 
-        return { ...week, workouts: updatedWorkouts };
+        return { ...session, workout: addSets };
     });
+
+    return programWithSets;
 };
 
-const addRepsToWorkouts = (trainingProgramWithSets, trainingPreferences) => {
-    // Determine reps based on training goal
+const addRepsToWorkouts = (programWithSets, trainingPreferences) => {
     let repsPerSet;
     if (trainingPreferences.training_goal === "Build Muscle") {
         repsPerSet = 8;
@@ -281,30 +300,18 @@ const addRepsToWorkouts = (trainingProgramWithSets, trainingPreferences) => {
         repsPerSet = 12;
     }
 
-    // Add reps to each workout
-    return trainingProgramWithSets.map((week) => {
-        const updatedWorkouts = week.workouts.map((workoutDay) => {
-            const updatedWorkout = {};
-
-            // Add reps for each muscle group in the workout
-            for (const muscleGroup in workoutDay.workout) {
-                updatedWorkout[muscleGroup] = {
-                    exercise: workoutDay.workout[muscleGroup].exercise,
-                    sets: workoutDay.workout[muscleGroup].sets,
-                    reps: repsPerSet,
-                };
-            }
-            return { ...workoutDay, workout: updatedWorkout };
+    const programWithReps = programWithSets.map((session) => {
+        const addReps = session.workout.map((exercise) => {
+            return { ...exercise, reps: repsPerSet };
         });
-
-        return { ...week, workouts: updatedWorkouts };
+        return { ...session, workout: addReps };
     });
+    console.log("program with reps:", programWithReps);
+
+    return programWithReps;
 };
 
-const addWeighsToWorkouts = async (
-    trainingProgramWithReps,
-    trainingPreferences
-) => {
+const addWeighsToWorkouts = async (programWithReps, trainingPreferences) => {
     let liftingWeights;
     if (
         trainingPreferences.starting_fitness_level === "Beginner" &&
@@ -318,23 +325,11 @@ const addWeighsToWorkouts = async (
         liftingWeights = trainingPreferences.weight * 0.3;
     }
 
-    return trainingProgramWithReps.map((week) => {
-        const updatedWorkouts = week.workouts.map((workoutDay) => {
-            const updatedWorkout = {};
-
-            // Add reps for each muscle group in the workout
-            for (const muscleGroup in workoutDay.workout) {
-                updatedWorkout[muscleGroup] = {
-                    exercise: workoutDay.workout[muscleGroup].exercise,
-                    sets: workoutDay.workout[muscleGroup].sets,
-                    reps: workoutDay.workout[muscleGroup].reps,
-                    liftingWeights: liftingWeights,
-                };
-            }
-            return { ...workoutDay, workout: updatedWorkout };
+    return programWithReps.map((session) => {
+        const updatedExercises = session.workout.map((exercise) => {
+            return { ...exercise, weight: liftingWeights };
         });
-
-        return { ...week, workouts: updatedWorkouts };
+        return { ...session, workout: updatedExercises };
     });
 };
 
@@ -382,65 +377,184 @@ const generateWorkoutProgram = async (req, res) => {
             trainingPreferences,
             restructuredExerciseData
         );
-        console.log("workout program: ", workoutProgramFramework);
+        console.log("\nworkout program framework: \n");
+        console.dir(workoutProgramFramework, { depth: null });
 
         // create Weekly workouts program
-        const weeklyTrainingProgram = createWeeklyWorkouts(
+        const programSkeletonOutput = createProgramSkeleton(
             workoutProgramFramework,
             trainingPreferences.training_days_per_week
         );
 
-        console.dir(weeklyTrainingProgram, { depth: null });
+        const { programSkeleton, numWeeks } = programSkeletonOutput;
+
+        console.log("\nProgram Skeleton:\n");
+        console.dir(programSkeleton, { depth: null });
 
         // add sets to workouts
-        const trainingProgramWithSets = addSetsToWorkouts(
-            weeklyTrainingProgram,
+        const programWithSets = addSetsToWorkouts(
+            programSkeleton,
             trainingPreferences.training_time_per_session
         );
 
         console.log("\ntraining programs with sets:\n");
-        console.dir(trainingProgramWithSets, { depth: null });
+        console.dir(programWithSets, { depth: null });
 
         // add reps to workouts
-        const trainingProgramWithReps = addRepsToWorkouts(
-            trainingProgramWithSets,
+        const programWithReps = addRepsToWorkouts(
+            programWithSets,
             trainingPreferences
         );
 
         console.log("\ntraining programs with reps:\n");
-        console.dir(trainingProgramWithReps, { depth: null });
+        console.dir(programWithReps, { depth: null });
 
         // add lifting weights to workouts
 
-        const trainingProgramWithWeights = await addWeighsToWorkouts(
-            trainingProgramWithReps,
+        const programWithWeights = await addWeighsToWorkouts(
+            programWithReps,
             trainingPreferences
-        )
+        );
 
         console.log("\ntraining programs with weights:\n");
-        console.dir(trainingProgramWithWeights, { depth: null });
+        console.dir(programWithWeights, { depth: null });
+
+        const programId = await insertWorkoutProgram(
+            userId,
+            workoutProgramFramework,
+            numWeeks,
+            trainingPreferences.training_days_per_week
+        );
+        if (!programId) {
+            return res
+                .status(500)
+                .json({ error: "Failed to insert workout program." });
+        }
+
+        console.log("program id: ", programId);
+
+        const programWithSessionId = await insertSessions(
+            programId,
+            programWithWeights,
+            trainingPreferences.training_time_per_session
+        );
+
+        console.log("updated session with id: ");
+        console.dir(programWithSessionId, { depth: null });
+
+        await insertSessionDetails(programWithSessionId);
 
         return res.status(201).json({
             message: "User preference created successfully",
-            trainingProgram: trainingProgramWithWeights,
+            trainingProgram: programWithWeights,
         });
     } catch (error) {
         return res.status(500).json({ error: error.message });
     }
 };
 
-// const req = {
-//     decoded: {
-//         userId: 10,
-//     },
-// };
-// const res = {
-//     status: (statusCode) => ({
-//         json: (response) =>
-//             console.log(`Response: ${JSON.stringify(response)}`),
-//     }),
-// };
+const insertWorkoutProgram = async (
+    userId,
+    workoutProgramFramework,
+    numWeeks,
+    frequency
+) => {
+    try {
+        const query = `
+            INSERT INTO workout_programs (user_id, title, description, length, frequency)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING id;
+        `;
+        const result = await pool.query(query, [
+            userId,
+            workoutProgramFramework.title,
+            workoutProgramFramework.description,
+            numWeeks,
+            frequency,
+        ]);
+        const programId = result.rows[0].id; // This is the auto-generated program_id
+        return programId;
+    } catch (error) {
+        console.error("Error inserting workout program: ", error);
+        return null;
+    }
+};
 
-// generateWorkoutProgram(req, res);
+const insertSessions = async (programId, programWithWeight, length) => {
+    const programWithSessionId = [];
+    try {
+        for (const session of programWithWeight) {
+            // console.log(`programId: ${programId}, session date: ${session.date}, week of training: ${session.dayOfweek}, session no: ${session.sessionNo}`);
+
+            const query = `
+                    INSERT INTO sessions (program_id, session_date, week_of_training, completed, session_no, title, length)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    RETURNING id;
+                `;
+
+            const insertSessionResult = await pool.query(query, [
+                programId,
+                session.date,
+                session.week,
+                false, // initially not completed
+                session.sessionNo,
+                session.title,
+                length,
+            ]);
+
+            const sessionId = insertSessionResult.rows[0].id;
+            const updatedSessionWithId = { ...session, sessionId };
+            programWithSessionId.push(updatedSessionWithId);
+        }
+
+        return programWithSessionId;
+    } catch (error) {
+        console.error("Error inserting sessions: ", error);
+        return [];
+    }
+};
+
+const insertSessionDetails = async (programWithSessionId) => {
+    try {
+        for (const session of programWithSessionId) {
+            for (const exercise of session.workout) {
+                for (
+                    let setNumber = 1;
+                    setNumber <= exercise.sets;
+                    setNumber++
+                ) {
+                    const query = `
+                        INSERT INTO session_details (session_id, exercise_name, sets, reps, weight)
+                        VALUES ($1, $2, $3, $4, $5);
+                    `;
+
+                    await pool.query(query, [
+                        session.sessionId,
+                        exercise.exercise,
+                        setNumber,
+                        exercise.reps,
+                        exercise.weight,
+                    ]);
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Error inserting session details: ", error);
+    }
+};
+
+const req = {
+    decoded: {
+        userId: 10,
+    },
+};
+const res = {
+    status: (statusCode) => ({
+        json: (response) =>
+            console.log(`Response: ${JSON.stringify(response)}`),
+    }),
+};
+
+generateWorkoutProgram(req, res);
 
 module.exports = { generateWorkoutProgram };
