@@ -1,4 +1,5 @@
 const pool = require("../db/db");
+const { get } = require("../routers/auth");
 
 const getTrainingPreferences = async (userId) => {
     try {
@@ -333,6 +334,96 @@ const addWeighsToWorkouts = async (programWithReps, trainingPreferences) => {
     });
 };
 
+const insertWorkoutProgram = async (
+    userId,
+    workoutProgramFramework,
+    numWeeks,
+    frequency
+) => {
+    try {
+        const query = `
+            INSERT INTO workout_programs (user_id, title, description, length, frequency)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING id;
+        `;
+        const result = await pool.query(query, [
+            userId,
+            workoutProgramFramework.title,
+            workoutProgramFramework.description,
+            numWeeks,
+            frequency,
+        ]);
+        const programId = result.rows[0].id; // This is the auto-generated program_id
+        return programId;
+    } catch (error) {
+        console.error("Error inserting workout program: ", error);
+        return null;
+    }
+};
+
+const insertSessions = async (programId, programWithWeight, length) => {
+    const programWithSessionId = [];
+    try {
+        for (const session of programWithWeight) {
+            // console.log(`programId: ${programId}, session date: ${session.date}, week of training: ${session.dayOfweek}, session no: ${session.sessionNo}`);
+
+            const query = `
+                    INSERT INTO sessions (program_id, session_date, week_of_training, completed, session_no, title, length)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    RETURNING id;
+                `;
+
+            const insertSessionResult = await pool.query(query, [
+                programId,
+                session.date,
+                session.week,
+                false, // initially not completed
+                session.sessionNo,
+                session.title,
+                length,
+            ]);
+
+            const sessionId = insertSessionResult.rows[0].id;
+            const updatedSessionWithId = { ...session, sessionId };
+            programWithSessionId.push(updatedSessionWithId);
+        }
+
+        return programWithSessionId;
+    } catch (error) {
+        console.error("Error inserting sessions: ", error);
+        return [];
+    }
+};
+
+const insertSessionDetails = async (programWithSessionId) => {
+    try {
+        for (const session of programWithSessionId) {
+            for (const exercise of session.workout) {
+                for (
+                    let setNumber = 1;
+                    setNumber <= exercise.sets;
+                    setNumber++
+                ) {
+                    const query = `
+                        INSERT INTO session_details (session_id, exercise_name, sets, reps, weight)
+                        VALUES ($1, $2, $3, $4, $5);
+                    `;
+
+                    await pool.query(query, [
+                        session.sessionId,
+                        exercise.exercise,
+                        setNumber,
+                        exercise.reps,
+                        exercise.weight,
+                    ]);
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Error inserting session details: ", error);
+    }
+};
+
 const generateWorkoutProgram = async (req, res) => {
     const { userId } = req.decoded;
 
@@ -445,116 +536,103 @@ const generateWorkoutProgram = async (req, res) => {
         await insertSessionDetails(programWithSessionId);
 
         return res.status(201).json({
-            message: "User preference created successfully",
-            trainingProgram: programWithWeights,
+            message: "User workout program created successfully",
         });
     } catch (error) {
         return res.status(500).json({ error: error.message });
     }
 };
 
-const insertWorkoutProgram = async (
-    userId,
-    workoutProgramFramework,
-    numWeeks,
-    frequency
-) => {
-    try {
-        const query = `
-            INSERT INTO workout_programs (user_id, title, description, length, frequency)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING id;
-        `;
-        const result = await pool.query(query, [
-            userId,
-            workoutProgramFramework.title,
-            workoutProgramFramework.description,
-            numWeeks,
-            frequency,
-        ]);
-        const programId = result.rows[0].id; // This is the auto-generated program_id
-        return programId;
-    } catch (error) {
-        console.error("Error inserting workout program: ", error);
-        return null;
-    }
-};
+// const req = {
+//     decoded: {
+//         userId: 10,
+//     },
+// };
+// const res = {
+//     status: (statusCode) => ({
+//         json: (response) =>
+//             console.log(`Response: ${JSON.stringify(response)}`),
+//     }),
+// };
 
-const insertSessions = async (programId, programWithWeight, length) => {
-    const programWithSessionId = [];
-    try {
-        for (const session of programWithWeight) {
-            // console.log(`programId: ${programId}, session date: ${session.date}, week of training: ${session.dayOfweek}, session no: ${session.sessionNo}`);
+// generateWorkoutProgram(req, res);
 
-            const query = `
-                    INSERT INTO sessions (program_id, session_date, week_of_training, completed, session_no, title, length)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7)
-                    RETURNING id;
+const getWorkoutProgram = async (req, res) => {
+    const { userId } = req.decoded;
+
+    try {
+        const programQuery = `
+            SELECT id, title, description, length, frequency
+            FROM workout_programs
+            WHERE user_id = $1
+            ORDER by id DESC
+            LIMIT 1`;
+
+        const programQueryResult = await pool.query(programQuery, [userId]);
+        if (programQueryResult.rowCount === 0) {
+            return res
+                .status(404)
+                .json({ error: "No workout program found for this user" });
+        }
+
+        const program = programQueryResult.rows[0];
+
+        const sessionsQuery = `
+            SELECT id as session_id, session_date, week_of_training, completed, session_no, title, length
+            FROM sessions
+            WHERE program_id = $1
+            ORDER BY session_date ASC
+            `;
+        const sessionsResult = await pool.query(sessionsQuery, [program.id]);
+        const sessions = sessionsResult.rows;
+
+        const sessionsDetails = await Promise.all(
+            sessions.map(async (session) => { //.map() returns an array
+                const detailsQuery = `
+                    SELECT id, session_id, exercise_name, sets, reps, weight, completed
+                    FROM session_details
+                    WHERE session_id = $1;
                 `;
+        
+                    const { rows: sessionDetailArray } = await pool.query(detailsQuery, [session.session_id]); 
 
-            const insertSessionResult = await pool.query(query, [
-                programId,
-                session.date,
-                session.week,
-                false, // initially not completed
-                session.sessionNo,
-                session.title,
-                length,
-            ]);
+                    /* 
+                    query result returned is an object in this format: 
+                        {rows: :[array of rows returned from the query] }
+                    the number of elements in the array in the property 'rows' is the corresponding number of session_details entities  that matches query condition 
+                    
+                    e.g., if session_id X has 2 session details, the 'rows' property will contain an array of 2 objects 
+                    [
+                        { id: 1, session_id: 1, exercise_name: "Barbell Squats", sets: 3, reps: 8, weight: 100, completed: false },
+                        { id: 2, session_id: 1, exercise_name: "Deadlift", sets: 3, reps: 6, weight: 150, completed: false },
+                    ]
+                    
+                    { rows: sessionDetailArray } deconstructs the object and extracts the 'rows' property's value (an array of objects) and assigns it to the variable sessionDetailsArray 
+                    sessionDetailsArray is an array of objects, each object represents a session detail entity
 
-            const sessionId = insertSessionResult.rows[0].id;
-            const updatedSessionWithId = { ...session, sessionId };
-            programWithSessionId.push(updatedSessionWithId);
-        }
+                    */
+        
+                return  sessionDetailArray;
+                // each sessionDetailArray is returned as an element in the array returned by .map() and assigned to the variable sessionsWithDetails
+            })
+        );
 
-        return programWithSessionId;
+        const flattenedSessionsDetails = sessionsDetails.flat(); // Flatten the array to remove the first level of nesting
+
+
+        // Combine everything into the response
+        return res.status(200).json({
+            message: "Workout program retrieved successfully",
+            program: {
+                program: program,
+                sessions: sessions,
+                sessionDetails: flattenedSessionsDetails,
+            },
+        });
     } catch (error) {
-        console.error("Error inserting sessions: ", error);
-        return [];
+        console.error("Error retrieving workout program: ", error);
+        return res.status(500).json({ error: error.message });
     }
 };
 
-const insertSessionDetails = async (programWithSessionId) => {
-    try {
-        for (const session of programWithSessionId) {
-            for (const exercise of session.workout) {
-                for (
-                    let setNumber = 1;
-                    setNumber <= exercise.sets;
-                    setNumber++
-                ) {
-                    const query = `
-                        INSERT INTO session_details (session_id, exercise_name, sets, reps, weight)
-                        VALUES ($1, $2, $3, $4, $5);
-                    `;
-
-                    await pool.query(query, [
-                        session.sessionId,
-                        exercise.exercise,
-                        setNumber,
-                        exercise.reps,
-                        exercise.weight,
-                    ]);
-                }
-            }
-        }
-    } catch (error) {
-        console.error("Error inserting session details: ", error);
-    }
-};
-
-const req = {
-    decoded: {
-        userId: 10,
-    },
-};
-const res = {
-    status: (statusCode) => ({
-        json: (response) =>
-            console.log(`Response: ${JSON.stringify(response)}`),
-    }),
-};
-
-generateWorkoutProgram(req, res);
-
-module.exports = { generateWorkoutProgram };
+module.exports = { generateWorkoutProgram, getWorkoutProgram };
