@@ -398,6 +398,7 @@ const insertSessions = async (programId, programWithWeight, length) => {
 const insertSessionDetails = async (programWithSessionId) => {
     try {
         for (const session of programWithSessionId) {
+            let exerciseNo = 1; // Initialize exercise_no counter for the session
             for (const exercise of session.workout) {
                 for (
                     let setNumber = 1;
@@ -405,18 +406,20 @@ const insertSessionDetails = async (programWithSessionId) => {
                     setNumber++
                 ) {
                     const query = `
-                        INSERT INTO session_details (session_id, exercise_name, sets, reps, weight)
-                        VALUES ($1, $2, $3, $4, $5);
+                        INSERT INTO session_details (session_id, exercise_name, exercise_no, sets, reps, weight)
+                        VALUES ($1, $2, $3, $4, $5, $6);
                     `;
 
                     await pool.query(query, [
                         session.sessionId,
                         exercise.exercise,
+                        exerciseNo,
                         setNumber,
                         exercise.reps,
                         exercise.weight,
                     ]);
                 }
+                exerciseNo++;
             }
         }
     } catch (error) {
@@ -587,16 +590,20 @@ const getWorkoutProgram = async (req, res) => {
         const sessions = sessionsResult.rows;
 
         const sessionsDetails = await Promise.all(
-            sessions.map(async (session) => { //.map() returns an array
+            sessions.map(async (session) => {
+                //.map() returns an array
                 const detailsQuery = `
-                    SELECT id, session_id, exercise_name, sets, reps, weight, completed
+                    SELECT session_id, exercise_name, sets, reps, weight, completed, exercise_no
                     FROM session_details
                     WHERE session_id = $1;
                 `;
-        
-                    const { rows: sessionDetailArray } = await pool.query(detailsQuery, [session.session_id]); 
 
-                    /* 
+                const { rows: sessionDetailArray } = await pool.query(
+                    detailsQuery,
+                    [session.session_id]
+                );
+
+                /* 
                     query result returned is an object in this format: 
                         {rows: :[array of rows returned from the query] }
                     the number of elements in the array in the property 'rows' is the corresponding number of session_details entities  that matches query condition 
@@ -611,14 +618,13 @@ const getWorkoutProgram = async (req, res) => {
                     sessionDetailsArray is an array of objects, each object represents a session detail entity
 
                     */
-        
-                return  sessionDetailArray;
+
+                return sessionDetailArray;
                 // each sessionDetailArray is returned as an element in the array returned by .map() and assigned to the variable sessionsWithDetails
             })
         );
 
         const flattenedSessionsDetails = sessionsDetails.flat(); // Flatten the array to remove the first level of nesting
-
 
         // Combine everything into the response
         return res.status(200).json({
@@ -635,4 +641,93 @@ const getWorkoutProgram = async (req, res) => {
     }
 };
 
-module.exports = { generateWorkoutProgram, getWorkoutProgram };
+const updateSessionDetailsRepsWeight = async (req, res) => {
+    const { session_id, exercise_name, sets, reps, weight, completed } = req.body;
+
+    try {
+        const result = await pool.query(
+            `UPDATE session_details 
+             SET reps = $1, weight = $2, completed = $3 
+             WHERE session_id = $4 AND exercise_name = $5 AND sets = $6
+             RETURNING *`,
+            [reps, weight, completed, session_id, exercise_name, sets]
+        );
+
+        if (result.rowCount === 0) {
+            return res
+                .status(404)
+                .json({ error: "Session detail not found for update" });
+        }
+
+        return res.status(200).json({
+            message: "Session detail updated successfully",
+            updatedSessionDetail: result.rows[0],
+        });
+    } catch (error) {
+        console.error("Error updating session detail: ", error);
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+const updateSessionDetailsAddSet = async (req, res) => {
+    const { session_id, exercise_name, reps, weight } = req.body;
+    try {
+        // Find the next set number for the exercise
+        const maxSetResult = await pool.query(
+            `SELECT MAX(sets) AS max_set 
+             FROM session_details 
+             WHERE session_id = $1 AND exercise_name = $2`,
+            [session_id, exercise_name]
+        );
+
+        const nextSet = (maxSetResult.rows[0].max_set || 0) + 1;
+
+        // Insert the new set into the database
+        const result = await pool.query(
+            `INSERT INTO session_details (session_id, exercise_name, sets, reps, weight, completed) 
+             VALUES ($1, $2, $3, $4, $5, $6) 
+             RETURNING *`,
+            [session_id, exercise_name, nextSet, reps, weight, false]
+        );
+
+        // Return the newly added session detail
+        res.status(201).json(result.rows[0]);
+    } catch (error) {
+        console.error("Error adding new set:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+const updateSessionDetailsDeleteSet = async (req, res) => {
+    const { session_id, exercise_name, sets } = req.body;
+
+    try {
+        // Delete the specific set for the exercise
+        const result = await pool.query(
+            `DELETE FROM session_details 
+             WHERE session_id = $1 AND exercise_name = $2 AND sets = $3 
+             RETURNING *`,
+            [session_id, exercise_name, sets]
+        );
+
+        if (result.rows.length === 0) {
+            return res
+                .status(404)
+                .json({ message: "Session detail not found" });
+        }
+
+        // Return the deleted session detail
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error("Error deleting session detail:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+module.exports = {
+    generateWorkoutProgram,
+    getWorkoutProgram,
+    updateSessionDetailsRepsWeight,
+    updateSessionDetailsAddSet,
+    updateSessionDetailsDeleteSet,
+};
