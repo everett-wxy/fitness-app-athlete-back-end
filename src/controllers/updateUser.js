@@ -1,4 +1,5 @@
 const pool = require("../db/db"); // Import pg pool instance
+const { get } = require("../routers/auth");
 
 const updateUser = async (req, res) => {
     const { firstName, lastName, dob, gender } = req.body;
@@ -195,9 +196,25 @@ const updateAccessToEquipements = async (req, res) => {
         });
     }
 };
+
+const getUser = async (req, res) => {
+    try {
+        const users = await pool.query("SELECT * FROM users");
+        res.status(200).json(users.rows);
+    } catch (error) {
+        console.error("Error getting users: ", error);
+        res.status(500).json({
+            status: "error",
+            message: "Error getting users",
+            error: error.message,
+        });
+    }
+}
+
 module.exports = {
     updateUser,
     createPhysicalMeasurement,
     createTrainingPreference,
     updateAccessToEquipements,
+    getUser,
 };

@@ -23,4 +23,15 @@ const authenticateToken = (req, res, next) => {
     }
 };
 
-module.exports = { authenticateToken };
+const authoriseAdmin = (req, res, next) => {
+    // Check if the decoded token has 'admin' role
+    if (req.decoded && req.decoded.role !== "admin") {
+        return res.status(403).json({
+            status: "error",
+            msg: "Not authorized: Admin role required",
+        });
+    }
+    next();
+};
+
+module.exports = { authenticateToken, authoriseAdmin };

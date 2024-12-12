@@ -4,8 +4,9 @@ const {
     createPhysicalMeasurement,
     createTrainingPreference,
     updateAccessToEquipements,
+    getUser,
 } = require("../controllers/updateUser");
-const { authenticateToken } = require("../middleware/auth");
+const { authenticateToken, authoriseAdmin } = require("../middleware/auth");
 const router = express.Router();
 
 // router
@@ -23,5 +24,7 @@ router.post(
     authenticateToken,
     updateAccessToEquipements
 );
+
+router.get("/users", authenticateToken, authoriseAdmin,getUser);
 
 module.exports = router;

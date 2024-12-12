@@ -1,5 +1,5 @@
 const pool = require("../db/db");
-const { get } = require("../routers/auth");
+const { get, param } = require("../routers/auth");
 
 const getTrainingPreferences = async (userId) => {
     try {
@@ -724,10 +724,50 @@ const updateSessionDetailsDeleteSet = async (req, res) => {
     }
 };
 
+const updateSessionIsCompleted = async (req, res) => {
+    const { session_id } = req.body;
+
+    try {
+        // Check if the session is not completed
+        const query = `
+            SELECT * FROM session_details
+            WHERE session_id = $1 AND completed = false
+        `;
+        const queryResult = await pool.query(query, [session_id]);
+
+        if (queryResult.rowCount === 0) {
+            // No matching session details, proceed to mark session as completed
+            const updateQuery = `
+                UPDATE sessions
+                SET completed = true
+                WHERE id = $1
+            `;
+            await pool.query(updateQuery, [session_id]);
+            return res
+                .status(200)
+                .json({ message: `Session ${session_id} status updated to completed` });
+        } else {
+            // Session details exist and not yet completed
+            return res
+                .status(200)
+                .json({ message: `Session ${session_id} details found but not completed` });
+        }
+    } catch (error) {
+        console.error(
+            `Error updating session ${session_id}:`,
+            error.message
+        );
+        return res
+            .status(500)
+            .json({ message: `Error updating session: ${error.message}` });
+    }
+};
+
 module.exports = {
     generateWorkoutProgram,
     getWorkoutProgram,
     updateSessionDetailsRepsWeight,
     updateSessionDetailsAddSet,
     updateSessionDetailsDeleteSet,
+    updateSessionIsCompleted
 };
