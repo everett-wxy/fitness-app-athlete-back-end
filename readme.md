@@ -119,6 +119,8 @@ This fitness app is designed to help users plan, track, and complete their worko
 
 User goals and stretch goals [trello board](https://trello.com/b/JELkG16e/pt-app)
 
+Link to frontend repo: (https://github.com/everett-wxy/fitness-app-athlete-front-end.git)
+
 ## Usage
 1. **Generate a Workout Program**: Input your preferences (e.g., available days, fitness goals).
 2. **View Sessions**: Navigate through sessions to see scheduled workouts.
