@@ -80,27 +80,31 @@ This fitness app is designed to help users plan, track, and complete their worko
    npm install
    ```
 3. Create a .env file in the backend project directory with the following variables
-`DB_HOST=localhost
+```
+DB_HOST=localhost
 DB_USER='username'
 DB_NAME='database name'
 DB_PORT='DB port' 
 ACCESS_TOKEN_SECRET='randomly generated strings'
 REFRESH_TOKEN_SECRET='randomly generated strings'
-PORT=5001 `
+PORT=5001
+```
 
 4. Create a .env file in the frontend project directory with the following variables
-`VITE_SERVER=http://127.0.0.1:5001`
+```
+VITE_SERVER=http://127.0.0.1:5001
+```
 
-5. Set up the database:
+6. Set up the database:
    - Create a PostgreSQL database.
    - Run the provided SQL scripts in the table.sql file to create the necessary tables and input the necessary data.
 
-6. Start the backend server:
+7. Start the backend server:
    ```bash
    npm run server
    ```
 
-7. Start the frontend development server:
+8. Start the frontend development server:
    ```bash
    npm start
    ```
