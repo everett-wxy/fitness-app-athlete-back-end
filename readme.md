@@ -26,7 +26,8 @@ This fitness app is designed to help users plan, track, and complete their worko
 <img width="1706" alt="image" src="https://github.com/user-attachments/assets/30d4a7d7-25de-475e-afc7-5a455560b5f2" />
 
 ### Exercise page
-<img width="1706" alt="image" src="https://github.com/user-attachments/assets/d85f7c8b-c609-4b69-8bed-65d0aa8684a2" />
+<img width="396" alt="image" src="https://github.com/user-attachments/assets/3cf9eb99-90ba-4a6c-8be2-5985c641f2b8" />
+
 
 ## Key Features
 
