@@ -69,9 +69,13 @@ This fitness app is designed to help users plan, track, and complete their worko
 - PostgreSQL (v14 or higher)
 
 ### Steps
-1. Clone the repository:
+1. Clone both the frontend and backend repository:
    ```bash
-   git clone <repository_url>
+   git clone [repository_url](https://github.com/everett-wxy/fitness-app-athlete-back-end.git)
+   cd fitness-app
+   ```
+   ```bash
+   git clone [repository_url](https://github.com/everett-wxy/fitness-app-athlete-back-end.git)](https://github.com/everett-wxy/fitness-app-athlete-front-end.git)
    cd fitness-app
    ```
 
@@ -79,6 +83,7 @@ This fitness app is designed to help users plan, track, and complete their worko
    ```bash
    npm install
    ```
+   
 3. Create a .env file in the backend project directory with the following variables
    ```
    DB_HOST=localhost
