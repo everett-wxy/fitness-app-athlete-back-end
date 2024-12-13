@@ -25,6 +25,6 @@ router.post(
     updateAccessToEquipements
 );
 
-router.get("/users", authenticateToken, authoriseAdmin,getUser);
+router.get("/users", authenticateToken, authoriseAdmin, getUser);
 
 module.exports = router;
