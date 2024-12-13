@@ -80,20 +80,20 @@ This fitness app is designed to help users plan, track, and complete their worko
    npm install
    ```
 3. Create a .env file in the backend project directory with the following variables
-```
-DB_HOST=localhost
-DB_USER='username'
-DB_NAME='database name'
-DB_PORT='DB port' 
-ACCESS_TOKEN_SECRET='randomly generated strings'
-REFRESH_TOKEN_SECRET='randomly generated strings'
-PORT=5001
-```
+   ```
+   DB_HOST=localhost
+   DB_USER='username'
+   DB_NAME='database name'
+   DB_PORT='DB port' 
+   ACCESS_TOKEN_SECRET='randomly generated strings'
+   REFRESH_TOKEN_SECRET='randomly generated strings'
+   PORT=5001
+   ```
 
 4. Create a .env file in the frontend project directory with the following variables
-```
-VITE_SERVER=http://127.0.0.1:5001
-```
+   ```
+   VITE_SERVER=http://127.0.0.1:5001
+   ```
 
 6. Set up the database:
    - Create a PostgreSQL database.
@@ -109,7 +109,8 @@ VITE_SERVER=http://127.0.0.1:5001
    npm start
    ```
 # ERD 
-<img width="396" alt="image" src="https://github.com/user-attachments/assets/a3705b90-0494-4590-ae94-da9d0518a0d2" />
+![Database ER diagram (crow's foot)](https://github.com/user-attachments/assets/de3f749e-0df9-4bfb-90e6-2e99fe7b34e1)
+
 
 User goals and stretch goals [trello board](https://trello.com/b/JELkG16e/pt-app)
 
