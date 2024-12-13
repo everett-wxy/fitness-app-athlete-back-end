@@ -79,7 +79,7 @@ VITE_SERVER=http://127.0.0.1:5001
 
 4. Set up the database:
    - Create a PostgreSQL database.
-   - Run the provided SQL scripts to create the necessary tables and input the necessary data.
+   - Run the provided SQL scripts in the table.sql file to create the necessary tables and input the necessary data.
 
 5. Start the backend server:
    ```bash
