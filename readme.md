@@ -15,12 +15,16 @@ This fitness app is designed to help users plan, track, and complete their worko
 ## Screenshots 
 ### Login page 
 <img width="1702" alt="image" src="https://github.com/user-attachments/assets/a936c48a-0e6f-47f9-adc5-aeb32a8d28bf" />
+
 ### Workout program review page 
 <img width="1708" alt="image" src="https://github.com/user-attachments/assets/e47ee86f-9c08-496a-863a-7eceba9624b2" />
+
 ### Account creation page 
 <img width="697" alt="image" src="https://github.com/user-attachments/assets/55583433-b0ac-49c5-b81c-221a352b2b6c" />
+
 ### Planner page
 <img width="1706" alt="image" src="https://github.com/user-attachments/assets/30d4a7d7-25de-475e-afc7-5a455560b5f2" />
+
 ### Exercise page
 <img width="1706" alt="image" src="https://github.com/user-attachments/assets/d85f7c8b-c609-4b69-8bed-65d0aa8684a2" />
 
