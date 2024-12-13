@@ -213,7 +213,7 @@ const createProgramFramework = (
 const createProgramSkeleton = (
     workoutProgramFramework,
     trainingDaysPerWeek,
-    numWeeks = 2,
+    numWeeks = 4,
     startDate = new Date()
 ) => {
     const weeklyWorkouts = [];
