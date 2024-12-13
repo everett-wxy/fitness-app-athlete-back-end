@@ -1,9 +1,9 @@
-# Athlete
 
-## Overview
+
+## Overview of Athlete 
 This fitness app is designed to help users plan, track, and complete their workouts efficiently. It provides a personalized workout experience by generating training programs based on user preferences, tracking progress, and offering support for both training and rest days. The app is built with scalability and user engagement in mind, combining a rich frontend with a powerful backend.
 
-# Table of content
+## Table of content
 1. Screenshots
 2. Key features
 3. Technologies used 
@@ -108,6 +108,10 @@ VITE_SERVER=http://127.0.0.1:5001
    ```bash
    npm start
    ```
+# ERD 
+<img width="396" alt="image" src="https://github.com/user-attachments/assets/a3705b90-0494-4590-ae94-da9d0518a0d2" />
+
+User goals and stretch goals [trello board](https://trello.com/b/JELkG16e/pt-app)
 
 ## Usage
 1. **Generate a Workout Program**: Input your preferences (e.g., available days, fitness goals).
@@ -115,7 +119,6 @@ VITE_SERVER=http://127.0.0.1:5001
 3. **Track Progress**: Mark exercises and sessions as completed.
 4. **Rest Days**: Enjoy motivational and recovery advice on designated rest days.
 5. **Plan Ahead**: Use the planner feature to adjust your training schedule as needed.
-
 
 ## Future Enhancements
 - Add community features like sharing workout plans or progress.
