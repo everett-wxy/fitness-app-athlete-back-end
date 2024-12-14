@@ -71,12 +71,10 @@ This fitness app is designed to help users plan, track, and complete their worko
 ### Steps
 1. Clone both the frontend and backend repository:
    ```bash
-   git clone [repository_url](https://github.com/everett-wxy/fitness-app-athlete-back-end.git)
-   cd fitness-app
+   git clone https://github.com/everett-wxy/fitness-app-athlete-back-end.git
    ```
    ```bash
-   git clone [repository_url](https://github.com/everett-wxy/fitness-app-athlete-back-end.git)](https://github.com/everett-wxy/fitness-app-athlete-front-end.git)
-   cd fitness-app
+   git clone https://github.com/everett-wxy/fitness-app-athlete-back-end.git)](https://github.com/everett-wxy/fitness-app-athlete-front-end.git
    ```
 
 2. Install dependencies:
