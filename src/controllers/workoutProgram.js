@@ -11,7 +11,7 @@ const getTrainingPreferences = async (userId) => {
         `;
         const trainingPreferenceQueryResult = await pool.query(
             trainingPreferenceQuery,
-            [userId]
+            [userId],
         );
 
         // trainingPreferenceQueryResult returns an object containing different KVP, I want to extract the 'rows' KVP, which contains an array of object
@@ -108,7 +108,7 @@ const filterExercisesByGoal = async (accessibleExercises, trainingGoal) => {
             `SELECT * FROM exercises
             WHERE name = ANY($1::text[])
             AND exercise_modalities = $2`,
-            [accessibleExercises, exercise_modality]
+            [accessibleExercises, exercise_modality],
         );
         return filteredExerciseQuery.rows;
     } catch (error) {
@@ -144,7 +144,7 @@ const restructureExerciseData = (filteredExercises) => {
 
 const createProgramFramework = (
     trainingPreferences,
-    restructuredExerciseData
+    restructuredExerciseData,
 ) => {
     if (
         trainingPreferences.training_goal === "Build Muscle" &&
@@ -214,7 +214,7 @@ const createProgramSkeleton = (
     workoutProgramFramework,
     trainingDaysPerWeek,
     numWeeks = 4,
-    startDate = new Date()
+    startDate = new Date(),
 ) => {
     const weeklyWorkouts = [];
     let lastWorkout = "A";
@@ -256,7 +256,7 @@ const createProgramSkeleton = (
                     sessionNo: sessionNo++,
                     dayOfWeek: day,
                     date: new Date(
-                        new Date(currentDate).setHours(0, 0, 0, 0) // Reset time to midnight
+                        new Date(currentDate).setHours(0, 0, 0, 0), // Reset time to midnight
                     ),
                     title: currentWorkoutTitle,
                     workout: currentWorkout, // Assign the workout based on the alternation
@@ -338,7 +338,7 @@ const insertWorkoutProgram = async (
     userId,
     workoutProgramFramework,
     numWeeks,
-    frequency
+    frequency,
 ) => {
     try {
         const query = `
@@ -451,7 +451,7 @@ const generateWorkoutProgram = async (req, res) => {
         // get exercise filtered by training goal
         const filteredExercises = await filterExercisesByGoal(
             accessibleExercises,
-            trainingPreferences.training_goal
+            trainingPreferences.training_goal,
         );
 
         if (filteredExercises.length === 0) {
@@ -469,7 +469,7 @@ const generateWorkoutProgram = async (req, res) => {
         // create programframework
         const workoutProgramFramework = createProgramFramework(
             trainingPreferences,
-            restructuredExerciseData
+            restructuredExerciseData,
         );
         console.log("\nworkout program framework: \n");
         console.dir(workoutProgramFramework, { depth: null });
@@ -477,7 +477,7 @@ const generateWorkoutProgram = async (req, res) => {
         // create Weekly workouts program
         const programSkeletonOutput = createProgramSkeleton(
             workoutProgramFramework,
-            trainingPreferences.training_days_per_week
+            trainingPreferences.training_days_per_week,
         );
 
         const { programSkeleton, numWeeks } = programSkeletonOutput;
@@ -488,7 +488,7 @@ const generateWorkoutProgram = async (req, res) => {
         // add sets to workouts
         const programWithSets = addSetsToWorkouts(
             programSkeleton,
-            trainingPreferences.training_time_per_session
+            trainingPreferences.training_time_per_session,
         );
 
         console.log("\ntraining programs with sets:\n");
@@ -497,7 +497,7 @@ const generateWorkoutProgram = async (req, res) => {
         // add reps to workouts
         const programWithReps = addRepsToWorkouts(
             programWithSets,
-            trainingPreferences
+            trainingPreferences,
         );
 
         console.log("\ntraining programs with reps:\n");
@@ -507,7 +507,7 @@ const generateWorkoutProgram = async (req, res) => {
 
         const programWithWeights = await addWeighsToWorkouts(
             programWithReps,
-            trainingPreferences
+            trainingPreferences,
         );
 
         console.log("\ntraining programs with weights:\n");
@@ -517,7 +517,7 @@ const generateWorkoutProgram = async (req, res) => {
             userId,
             workoutProgramFramework,
             numWeeks,
-            trainingPreferences.training_days_per_week
+            trainingPreferences.training_days_per_week,
         );
         if (!programId) {
             return res
@@ -530,7 +530,7 @@ const generateWorkoutProgram = async (req, res) => {
         const programWithSessionId = await insertSessions(
             programId,
             programWithWeights,
-            trainingPreferences.training_time_per_session
+            trainingPreferences.training_time_per_session,
         );
 
         console.log("updated session with id: ");
@@ -600,7 +600,7 @@ const getWorkoutProgram = async (req, res) => {
 
                 const { rows: sessionDetailArray } = await pool.query(
                     detailsQuery,
-                    [session.session_id]
+                    [session.session_id],
                 );
 
                 /* 
@@ -621,7 +621,7 @@ const getWorkoutProgram = async (req, res) => {
 
                 return sessionDetailArray;
                 // each sessionDetailArray is returned as an element in the array returned by .map() and assigned to the variable sessionsWithDetails
-            })
+            }),
         );
 
         const flattenedSessionsDetails = sessionsDetails.flat(); // Flatten the array to remove the first level of nesting
@@ -642,7 +642,8 @@ const getWorkoutProgram = async (req, res) => {
 };
 
 const updateSessionDetailsRepsWeight = async (req, res) => {
-    const { session_id, exercise_name, sets, reps, weight, completed } = req.body;
+    const { session_id, exercise_name, sets, reps, weight, completed } =
+        req.body;
 
     try {
         const result = await pool.query(
@@ -650,7 +651,7 @@ const updateSessionDetailsRepsWeight = async (req, res) => {
              SET reps = $1, weight = $2, completed = $3 
              WHERE session_id = $4 AND exercise_name = $5 AND sets = $6
              RETURNING *`,
-            [reps, weight, completed, session_id, exercise_name, sets]
+            [reps, weight, completed, session_id, exercise_name, sets],
         );
 
         if (result.rowCount === 0) {
@@ -677,7 +678,7 @@ const updateSessionDetailsAddSet = async (req, res) => {
             `SELECT MAX(sets) AS max_set 
              FROM session_details 
              WHERE session_id = $1 AND exercise_name = $2`,
-            [session_id, exercise_name]
+            [session_id, exercise_name],
         );
 
         const nextSet = (maxSetResult.rows[0].max_set || 0) + 1;
@@ -687,7 +688,7 @@ const updateSessionDetailsAddSet = async (req, res) => {
             `INSERT INTO session_details (session_id, exercise_name, sets, reps, weight, completed) 
              VALUES ($1, $2, $3, $4, $5, $6) 
              RETURNING *`,
-            [session_id, exercise_name, nextSet, reps, weight, false]
+            [session_id, exercise_name, nextSet, reps, weight, false],
         );
 
         // Return the newly added session detail
@@ -707,7 +708,7 @@ const updateSessionDetailsDeleteSet = async (req, res) => {
             `DELETE FROM session_details 
              WHERE session_id = $1 AND exercise_name = $2 AND sets = $3 
              RETURNING *`,
-            [session_id, exercise_name, sets]
+            [session_id, exercise_name, sets],
         );
 
         if (result.rows.length === 0) {
@@ -745,18 +746,19 @@ const updateSessionIsCompleted = async (req, res) => {
             await pool.query(updateQuery, [session_id]);
             return res
                 .status(200)
-                .json({ message: `Session ${session_id} status updated to completed` });
+                .json({
+                    message: `Session ${session_id} status updated to completed`,
+                });
         } else {
             // Session details exist and not yet completed
             return res
                 .status(200)
-                .json({ message: `Session ${session_id} details found but not completed` });
+                .json({
+                    message: `Session ${session_id} details found but not completed`,
+                });
         }
     } catch (error) {
-        console.error(
-            `Error updating session ${session_id}:`,
-            error.message
-        );
+        console.error(`Error updating session ${session_id}:`, error.message);
         return res
             .status(500)
             .json({ message: `Error updating session: ${error.message}` });
@@ -769,5 +771,5 @@ module.exports = {
     updateSessionDetailsRepsWeight,
     updateSessionDetailsAddSet,
     updateSessionDetailsDeleteSet,
-    updateSessionIsCompleted
+    updateSessionIsCompleted,
 };

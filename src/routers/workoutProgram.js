@@ -18,6 +18,7 @@ router.post(
     generateWorkoutProgram
 );
 router.get("/workoutProgram", authenticateToken, getWorkoutProgram);
+
 router.patch(
     "/session-details/patch",
     authenticateToken,

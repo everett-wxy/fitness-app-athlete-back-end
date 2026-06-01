@@ -3,7 +3,10 @@
 ## Overview of Athlete 
 This fitness app is designed to help users plan, track, and complete their workouts efficiently. It provides a personalized workout experience by generating training programs based on user preferences, tracking progress, and offering support for both training and rest days. The app is built with scalability and user engagement in mind, combining a rich frontend with a powerful backend.
 
-## Table of content
+## Problem
+Many beginners struggle to create structured workout plans that match their goals and available equipment. This app helps users go from onboarding to a generated workout schedule with trackable sessions.
+
+# Table of content
 1. Screenshots
 2. Key features
 3. Technologies used 
@@ -31,36 +34,46 @@ This fitness app is designed to help users plan, track, and complete their worko
 
 ## Key Features
 
-### 1. **Workout Program Generator**
-- Generates customized workout programs tailored to the user's available training days and fitness goals.
-- Tracks program length, session frequency, and exercises.
-
-### 2. **Session Management**
-- Displays details for each session, including title, week number, session number, and duration.
-- Allows users to view exercises grouped by sets and track completion status.
-- Supports navigation to detailed session pages for more information or progress updates.
-
-### 3. **Rest Day Support**
-- Highlights rest days and provides motivational prompts to recover and recharge.
-- Ensures rest days are distinct from training days based on session data.
-
-### 4. **Progress Tracking**
-- Marks sessions and exercises as completed or pending.
-- Provides an intuitive view of progress through the program.
-
-### 5. **User-Friendly Interface**
-- Clean and modern UI using React and TailwindCSS.
-- Responsive design ensures compatibility across devices.
-
-### 6. **Backend Support**
-- Backend integration using the PERN stack (PostgreSQL, Express, React, Node.js).
-- Handles workout program and session data with efficient database design.
+- User registration and login
+- Multi-step onboarding flow
+- Training preference collection
+- Equipment-based exercise filtering
+- Workout program generation
+- Weekly planner
+- Session and set completion tracking
 
 ## Technology Stack
-- **Frontend**: React, TailwindCSS
-- **Backend**: Node.js, Express.js
-- **Database**: PostgreSQL (Raw SQL for advanced querying)
-- **State Management**: Context API for managing workout program data
+Frontend: React, Vite, TailwindCSS, React Router, Context API
+Backend: Node.js, Express.js
+Database: PostgreSQL
+Authentication: JWT, bcrypt
+
+## Architecture / dataflow
+1. User completes onboarding
+2. frontend sends profile/preferences to Express backend
+3. backend stores data in PostgreSQL
+4. workout generator generate customised program based on user inputs by:
+      1. filtering exercises from the database based on the user’s training goal and available equipment
+      2. organizing exercises by muscle group and movement type
+      3. selecting suitable exercises for each workout session
+      4. generating the weekly training structure, including number of sessions per week
+      5. assigning sets, reps, and starting weights for each exercise
+5. generated program is saved as workout_programs, sessions, and session_details
+6. frontend displays program in planner/session views
+
+## Limitations and future imporovement 
+Current limitations:
+- Workout generation is rule-based and supports limited program types
+- JWT is stored in localStorage
+- Some onboarding API calls can be better sequenced with stronger error handling
+- Database setup scripts can be cleaned up
+
+Future improvements:
+- Add workout history analytics
+- Add progressive overload logic
+- Add more program templates
+- Use TanStack Query for server state
+- Improve auth with HTTP-only cookies
 
 ## Installation and Setup
 
@@ -104,12 +117,12 @@ This fitness app is designed to help users plan, track, and complete their worko
 
 7. Start the backend server:
    ```bash
-   npm run server
+   npm run dev
    ```
 
 8. Start the frontend development server:
    ```bash
-   npm start
+   npm run dev
    ```
 # ERD 
 ![Database ER diagram (crow's foot)](https://github.com/user-attachments/assets/de3f749e-0df9-4bfb-90e6-2e99fe7b34e1)
@@ -125,11 +138,6 @@ Link to frontend repo: (https://github.com/everett-wxy/fitness-app-athlete-front
 3. **Track Progress**: Mark exercises and sessions as completed.
 4. **Rest Days**: Enjoy motivational and recovery advice on designated rest days.
 5. **Plan Ahead**: Use the planner feature to adjust your training schedule as needed.
-
-## Future Enhancements
-- Add community features like sharing workout plans or progress.
-- Enable integration with wearable devices for automatic progress tracking.
-- Incorporate AI for smarter workout program recommendations.
 
 ## Attributions
 - unsplash.com for images illustrating the exercises

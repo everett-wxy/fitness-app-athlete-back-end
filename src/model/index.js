@@ -14,7 +14,7 @@ User.hasMany(PhysicalMeasurement, { foreignKey: "user_id" });
 PhysicalMeasurement.belongsTo(User, { foreignKey: "user_id" });
 
 Equipment.belongsToMany(AccessCategory, {
-    through: EquipmentAccess,
+    through: EquipmentAccess,                   
     foreignKey: "equipment_name",
     otherKey: "access_category_name",
 });

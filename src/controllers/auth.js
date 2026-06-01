@@ -7,11 +7,11 @@ const register = async (req, res) => {
     try {
         const { email, password, role="user" } = req.body;
 
-        // const duplicateEmail = await User.findOne({ where: { email } });
         const duplicateEmailResult = await pool.query(
             "SELECT * FROM users WHERE email = $1",
             [email]
         );
+        
         if (duplicateEmailResult.rowCount > 0) {
             return res.status(400).json({
                 status: "error",
@@ -19,6 +19,7 @@ const register = async (req, res) => {
                     "There is already an account associated with this email.",
             });
         }
+
         const hashed_password = await bcrypt.hash(password, 10);
 
         const insertUserResult = await pool.query(
