@@ -1,7 +1,7 @@
 
 
 ## Overview of Athlete 
-This fitness app is designed to help users plan, track, and complete their workouts efficiently. It provides a personalized workout experience by generating training programs based on user preferences, tracking progress, and offering support for both training and rest days. The app is built with scalability and user engagement in mind, combining a rich frontend with a powerful backend.
+Athlete is a full-stack fitness planning app I built to help users generate structured workout programs based on their goals, fitness level, available training days, and equipment access.
 
 ## Problem
 Many beginners struggle to create structured workout plans that match their goals and available equipment. This app helps users go from onboarding to a generated workout schedule with trackable sessions.
@@ -43,6 +43,8 @@ Many beginners struggle to create structured workout plans that match their goal
 - Session and set completion tracking
 
 ## Technology Stack
+The app was built with React and Vite on the frontend, Express and Node.js on the backend, and PostgreSQL as the database. I also used JWT for authentication, bcrypt for password hashing, React Router for page routing, and React Context API to share workout program state across components.
+
 Frontend: React, Vite, TailwindCSS, React Router, Context API
 Backend: Node.js, Express.js
 Database: PostgreSQL
@@ -61,6 +63,15 @@ Authentication: JWT, bcrypt
 5. generated program is saved as workout_programs, sessions, and session_details
 6. frontend displays program in planner/session views
 
+## Workout Generation Logic
+The backend receives the onboarding data through Express routes and stores it in PostgreSQL. The user's details, measurement, training preferences, and equipment access are stored in separate relational tables.
+
+![Database ER diagram (crow's foot)](https://github.com/user-attachments/assets/de3f749e-0df9-4bfb-90e6-2e99fe7b34e1)
+
+The generated program is saved across workout_programs, sessions, and session_details, which keeps the structure clean. One program has many sessions, and each session has many exercise sets. 
+
+The workout generator uses the user's training preferences and equipment access to select suitable exercises from the database. It filters exercises based on the user's goal and available equipment, then organises them by muscle group and movement type. From there, it creates a weeekly training structure with sessions, exercises, sets, reps and starting weights. 
+
 ## Limitations and future imporovement 
 Current limitations:
 - Workout generation is rule-based and supports limited program types
@@ -70,8 +81,8 @@ Current limitations:
 
 Future improvements:
 - Add workout history analytics
+- Improve the workout generator to support more program types
 - Add progressive overload logic
-- Add more program templates
 - Use TanStack Query for server state
 - Improve auth with HTTP-only cookies
 
@@ -124,8 +135,6 @@ Future improvements:
    ```bash
    npm run dev
    ```
-# ERD 
-![Database ER diagram (crow's foot)](https://github.com/user-attachments/assets/de3f749e-0df9-4bfb-90e6-2e99fe7b34e1)
 
 
 User goals and stretch goals [trello board](https://trello.com/b/JELkG16e/pt-app)
